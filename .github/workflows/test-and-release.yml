@@ -1,0 +1,100 @@
+name: test-and-release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "LICENSE"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["lts/*", latest]
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+      - name: Cache node modules
+        uses: actions/cache@main
+        env:
+          cache-name: cache-node-${{ matrix.node }}-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install
+        run: npm ci
+      - name: Tests
+        run: npm test
+  version-check:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@main
+      - id: check
+        uses: EndBug/version-check@v2
+        with:
+          diff-search: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    runs-on: ubuntu-latest
+    needs: version-check
+    if: needs.version-check.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@main
+      - name: "Add $GITHUB_WORKSPACE to git safe directories"
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE || exit 1
+      - uses: rickstaa/action-create-tag@main
+        with:
+          tag: v${{ needs.version-check.outputs.version }}
+          message: v${{ needs.version-check.outputs.version }}
+      - uses: ncipollo/release-action@main
+        with:
+          name: v${{ needs.version-check.outputs.version }}
+          tag: v${{ needs.version-check.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+  npm-publish:
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.version-check.outputs.changed == 'true'
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+      - uses: actions/cache@main
+        env:
+          cache-name: cache-node-${{ matrix.node }}-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install
+        run: |
+          set -e
+          npm ci
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
