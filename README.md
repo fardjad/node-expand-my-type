@@ -32,14 +32,67 @@ Under the hood, it uses the [TypeScript Compiler API][ts-compiler-api] to expand
 the type expression and optionally formats the output using
 [Prettier][prettier].
 
-# Usage
+# CLI
+
+### Installation
+
+To install the CLI globally, run:
+
+```sh
+npm install -g expand-my-type
+```
+
+Alternatively, the CLI can be run using `npx`:
+
+```sh
+npx expand-my-type
+```
+
+### CLI Usage
+
+```
+Usage:
+  expand-my-type [options] <source-file> <expression>
+
+Options:
+  -h, --help                    Show this help message
+  -p, --prettify                Prettify the output
+  -P, --no-prettify             Do not prettify the output
+  -c, --tsconfig <file>         Use the specified tsconfig.json file
+```
+
+Given a file named `example.ts` with the following contents:
+
+```typescript
+interface SomeInterface {
+  a: number;
+  b?: string;
+  c: number | undefined;
+}
+
+type SomeType = {
+  d: number;
+  e: SomeInterface;
+  f: () => void;
+};
+```
+
+Running the following command expands the type expression `SomeType["e"]`:
+
+```sh
+expand-my-type example.ts 'SomeType["e"]'
+# Output:
+# { a: number; b?: string; c: number }
+```
+
+# API
 
 This package exports a function named `expandMyType` that can be used in one of
 the following ways:
 
 1. Expand the type expression in a source file:
 
-   Given a file named `example.ts` with the following content:
+   Given a file named `example.ts` with the following contents:
 
    ```typescript
    interface SomeInterface {

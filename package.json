@@ -1,6 +1,6 @@
 {
   "name": "expand-my-type",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Expand TypeScript type expressions programmatically",
   "keywords": [
     "expand",
@@ -32,15 +32,21 @@
   },
   "main": "dist/index.cjs",
   "types": "dist/index.d.ts",
+  "bin": {
+    "expand-my-type": "./dist/cli.js"
+  },
   "files": [
     "dist/index.cjs",
     "dist/index.d.cts",
     "dist/index.d.ts",
-    "dist/index.js"
+    "dist/index.js",
+    "dist/cli.js"
   ],
   "scripts": {
+    "bundle-cli": "tsup ./src/cli.ts --format esm --sourcemap inline --silent",
+    "bundle-lib": "tsup ./src/index.ts --format cjs,esm --dts --clean --sourcemap inline --silent",
     "format": "prettier --write .",
-    "prepare": "tsup ./src/index.ts --format esm,cjs --dts --clean --sourcemap inline --silent",
+    "prepare": "npm run bundle-lib && npm run bundle-cli",
     "pretest": "tsc",
     "test": "tsx --test --test-reporter spec ./src/index.test.ts"
   },
