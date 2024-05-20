@@ -91,7 +91,7 @@ const usagePrompt = [
   "",
   "Options:",
   "  -h, --help\t\t\tShow this help message",
-  "  -p, --prettify\t\tPrettify the output",
+  "  -p, --prettify\t\tPrettify the output (default)",
   "  -P, --no-prettify\t\tDo not prettify the output",
   "  -c, --tsconfig <file>\t\tUse the specified tsconfig.json file",
 ].join("\n");

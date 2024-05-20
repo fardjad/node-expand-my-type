@@ -1,5 +1,7 @@
 import ts from "typescript";
 
+const identifierPrefix = "__TYPE_EXPANDER__";
+
 /**
  * Creates a custom compiler host that augments the specified source file for expanding a type expression.
  *
@@ -29,16 +31,15 @@ export const createExpanderCompilerHost = (
         return undefined;
       }
 
-      const sourceText = [
-        ...[
-          "type __TYPE_EXPANDER_RESULT__ = __TYPE_EXPANDER_EXPAND__<__TYPE_EXPANDER_EXPRESSION__>;",
-          `type __TYPE_EXPANDER_EXPRESSION__ = ${typeExpression};`,
-          "type __TYPE_EXPANDER_EXPAND__<T> = {",
-          "  [K in keyof T]: __TYPE_EXPANDER_EXPAND__<T[K]>;",
-          "} & {};",
-        ],
-        sourceFile.getFullText(),
-      ].join("\n");
+      // https://github.com/microsoft/TypeScript/blob/main/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
+      const sourceText = `type ${identifierPrefix}Result = ${identifierPrefix}Expand<${identifierPrefix}Expression>;
+        type ${identifierPrefix}Expression = ${typeExpression};
+
+        type ${identifierPrefix}Expand<T> = T extends (...args: infer A) => infer R
+          ? (...args: ${identifierPrefix}Expand<A>) => ${identifierPrefix}Expand<R>
+          : { [K in keyof T]: ${identifierPrefix}Expand<T[K]>; } & {};
+          
+        ${sourceFile.getFullText()}`;
 
       return ts.createSourceFile(
         fileName,

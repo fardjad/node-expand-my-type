@@ -95,3 +95,18 @@ await test("expand type expression from source text", async () => {
 
   assert.strictEqual(actual, "{ a: string; b: number }");
 });
+
+await test("expand function type", async () => {
+  const actual = await expandMyType({
+    sourceText: `
+      type Result = {
+        a: A;
+      };
+
+      type A = (a: number) => string;
+    `,
+    typeExpression: "Result",
+  });
+
+  assert.strictEqual(actual, "{ a: (a: number) => string }");
+});

@@ -23,10 +23,10 @@ type ExpandedType = Compute<SomeType>;
 
 This is mostly done to improve the readability of type hints shown in editors/IDEs.
 
-**Expand My Type** provides a programmatic way to do the same. It gets the
-source code as input, along with a type expression and returns the expanded
-form as a string. That can be useful for code-generation, testing, and debugging
-complex type errors.
+**Expand My Type** provides a programmatic way to do the same
+(see [limitations](#limitations)). It gets the source code as input, along with
+a type expression and returns the expanded form as a string. That can be useful
+for code-generation, testing, and debugging complex type errors.
 
 Under the hood, it uses the [TypeScript Compiler API][ts-compiler-api] to expand
 the type expression and optionally formats the output using
@@ -56,7 +56,7 @@ Usage:
 
 Options:
   -h, --help                    Show this help message
-  -p, --prettify                Prettify the output
+  -p, --prettify                Prettify the output (default)
   -P, --no-prettify             Do not prettify the output
   -c, --tsconfig <file>         Use the specified tsconfig.json file
 ```
@@ -122,7 +122,7 @@ the following ways:
    /* {
      d: number
      e: { a: number; b?: string; c: number }
-     f: {}
+     f: () => void
    } */
    ```
 
@@ -147,6 +147,39 @@ the following ways:
    console.log(expandedType);
    /* { a: string; b: number } */
    ```
+
+# Limitations
+
+Expand My Type uses the following utility type to expand the type expression:
+
+```typescript
+type Expand<T> = T extends (...args: infer A) => infer R
+  ? (...args: Expand<A>) => Expand<R>
+  : { [K in keyof T]: Expand<T[K]> } & {};
+```
+
+As a result, the output it generates is what the TypeScript compiler would
+infer from wrapping the type expression with the `Expand` utility type. That
+comes with some limitations. If you know a better approach to expand types, feel
+free to open an issue or a pull request.
+
+## Type References to Union String Literal Types
+
+Type references to union string literal types are not expanded. For example,
+expanding T in the following code:
+
+```typescript
+type T = { s: S };
+type S = "a" | "b";
+```
+
+results in `{ s: S }` instead of `{ s: "a" | "b" }`.
+
+## Recursive Type References
+
+Expanding recursive type references can lead to infinite loops. When an infinite
+loop happens, the generated output gets truncated. Prettifying the truncated
+output will throw an error.
 
 [compute-type]: https://github.com/microsoft/TypeScript/blob/main/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
 [prettier]: https://prettier.io

@@ -11,5 +11,5 @@ console.log(expandedType);
 /* {
   d: number
   e: { a: number; b?: string; c: number }
-  f: {}
+  f: () => void
 } */

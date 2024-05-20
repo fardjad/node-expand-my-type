@@ -14,3 +14,4 @@ const expandedType = await expandMyType({
 });
 
 console.log(expandedType);
+/* { a: string; b: number } */
