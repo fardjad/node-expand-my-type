@@ -32,7 +32,7 @@ Under the hood, it uses the [TypeScript Compiler API][ts-compiler-api] to expand
 the type expression and optionally formats the output using
 [Prettier][prettier].
 
-# CLI
+## CLI
 
 ### Installation
 
@@ -85,7 +85,7 @@ expand-my-type example.ts 'SomeType["e"]'
 # { a: number; b?: string; c: number }
 ```
 
-# API
+## API
 
 This package exports a function named `expandMyType` that can be used in one of
 the following ways:
@@ -148,7 +148,7 @@ the following ways:
    /* { a: string; b: number } */
    ```
 
-# Limitations
+## Limitations
 
 Expand My Type uses the following utility type to expand the type expression:
 
@@ -159,27 +159,31 @@ type Expand<T> = T extends (...args: infer A) => infer R
 ```
 
 As a result, the output it generates is what the TypeScript compiler would
-infer from wrapping the type expression with the `Expand` utility type. That
-comes with some limitations. If you know a better approach to expand types, feel
-free to open an issue or a pull request.
+infer from wrapping the type expression with the `Expand` utility type.
+This approach comes with some limitations.
 
-## Type References to Union String Literal Types
+### Type References to Union String Literal Types
 
 Type references to union string literal types are not expanded. For example,
-expanding T in the following code:
+expanding T in the following snippet:
 
 ```typescript
 type T = { s: S };
 type S = "a" | "b";
 ```
 
-results in `{ s: S }` instead of `{ s: "a" | "b" }`.
+outputs `{ s: S }` instead of `{ s: "a" | "b" }`.
 
-## Recursive Type References
+### Recursive Type References
 
 Expanding recursive type references can lead to infinite loops. When an infinite
-loop happens, the generated output gets truncated. Prettifying the truncated
-output will throw an error.
+loop occurs, the generated output gets truncated. Therefore, prettifying the
+truncated output will throw an error.
+
+## Contributions
+
+Considering the limitations above, contributions to improve the expansion
+utility type are more than welcome.
 
 [compute-type]: https://github.com/microsoft/TypeScript/blob/main/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
 [prettier]: https://prettier.io
