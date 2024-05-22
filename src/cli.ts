@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { expandMyType } from "./index.ts";
-import path from "node:path";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import ts from "typescript";
 
@@ -123,7 +122,7 @@ if (tsConfigFileName) {
 }
 
 const result = await expandMyType({
-  sourceFileName: path.resolve(sourceFileName),
+  sourceFileName,
   typeExpression,
   prettify: {
     enabled: prettify,

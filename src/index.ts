@@ -1,4 +1,5 @@
 import { createExpanderCompilerHost } from "./create-expander-compiler-host.ts";
+import path from "node:path";
 import { format, type Options as PrettierOptions } from "prettier";
 import ts from "typescript";
 
@@ -90,19 +91,21 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
 
   if ("sourceText" in options) {
     const sourceFile = ts.createSourceFile(
-      "test.ts",
+      "dummy.ts",
       options.sourceText,
       ts.ScriptTarget.Latest,
       true,
     );
 
     return expandMyType({
-      sourceFileName: "test.ts",
+      sourceFileName: "dummy.ts",
       typeExpression: options.typeExpression,
       getSourceFileFunction: () => sourceFile,
       tsCompilerOptions: options.tsCompilerOptions,
     });
   }
+
+  const resolvedSourceFileName = path.resolve(options.sourceFileName);
 
   const tsCompilerOptions = options.tsCompilerOptions ?? {
     noEmit: true,
@@ -114,19 +117,19 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
   };
 
   const compilerHost = createExpanderCompilerHost(
-    options.sourceFileName,
+    resolvedSourceFileName,
     options.typeExpression,
     tsCompilerOptions,
     options.getSourceFileFunction,
   );
 
   const program = ts.createProgram(
-    [options.sourceFileName],
+    [resolvedSourceFileName],
     tsCompilerOptions,
     compilerHost,
   );
 
-  const sourceFile = program.getSourceFile(options.sourceFileName);
+  const sourceFile = program.getSourceFile(resolvedSourceFileName);
   if (!sourceFile) {
     throw new Error("Source file not found!");
   }
@@ -137,21 +140,21 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
   }
 
   const typeChecker = program.getTypeChecker();
-  const expandedType = typeChecker.typeToString(
+  const expandedTypeString = typeChecker.typeToString(
     typeChecker.getTypeAtLocation(firstIdentifier),
     undefined,
     ts.TypeFormatFlags.NodeBuilderFlagsMask,
   );
 
   if (options.prettify && options.prettify.enabled === false) {
-    return expandedType;
+    return expandedTypeString;
   }
 
   const dummyTypeName = "__TYPE_EXPANDER_RESULT__";
 
   return (
     await format(
-      `type ${dummyTypeName} = ${expandedType}`,
+      `type ${dummyTypeName} = ${expandedTypeString}`,
       options.prettify?.options ?? {
         parser: "typescript",
         semi: false,

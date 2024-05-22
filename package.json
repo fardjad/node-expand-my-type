@@ -1,6 +1,6 @@
 {
   "name": "expand-my-type",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Expand TypeScript type expressions programmatically",
   "keywords": [
     "expand",
