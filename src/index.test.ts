@@ -1,7 +1,6 @@
 import { expandMyType } from "./index.ts";
 import assert from "node:assert";
 import { test } from "node:test";
-import ts from "typescript";
 
 await test("empty expression", async () => {
   const actual = await expandMyType({
@@ -13,14 +12,16 @@ await test("empty expression", async () => {
 });
 
 await test("non-existent source file", async () => {
-  const getSourceFileFunction = () => undefined;
-
   await assert.rejects(
     async () => {
       await expandMyType({
         sourceFileName: "test.ts",
-        getSourceFileFunction,
         typeExpression: "string",
+        compilerHostFunctionOverrides: {
+          readFile() {
+            return undefined;
+          },
+        },
       });
     },
     { message: "Source file not found!" },
@@ -28,49 +29,48 @@ await test("non-existent source file", async () => {
 });
 
 await test("invalid expression", async () => {
-  const getSourceFileFunction = () =>
-    ts.createSourceFile("test.ts", "", ts.ScriptTarget.Latest);
-
   const actual = await expandMyType({
     sourceFileName: "test.ts",
     typeExpression: "@invalid@",
-    getSourceFileFunction,
+    compilerHostFunctionOverrides: {
+      readFile() {
+        return "";
+      },
+    },
   });
 
   assert.strictEqual(actual, "any");
 });
 
 await test("invalid source", async () => {
-  const getSourceFileFunction = () =>
-    ts.createSourceFile("test.ts", "@invalid@", ts.ScriptTarget.Latest);
-
   const actual = await expandMyType({
     sourceFileName: "test.ts",
     typeExpression: "string",
-    getSourceFileFunction,
+    compilerHostFunctionOverrides: {
+      readFile() {
+        return "@invalid@";
+      },
+    },
   });
 
   assert.strictEqual(actual, "string");
 });
 
 await test("source is a complex object", async () => {
-  const getSourceFileFunction = () =>
-    ts.createSourceFile(
-      "test.ts",
-      `
-      type A<T> = {
-        a: string;
-      } & B<T>;
-
-      type B<T> = {
-        b: T;
-      };`,
-      ts.ScriptTarget.Latest,
-    );
-
   const result = await expandMyType({
     sourceFileName: "test.ts",
-    getSourceFileFunction,
+    compilerHostFunctionOverrides: {
+      readFile() {
+        return `
+          type A<T> = {
+            a: string;
+          } & B<T>;
+
+          type B<T> = {
+            b: T;
+          };`;
+      },
+    },
     typeExpression: "A<number>",
   });
 
@@ -109,4 +109,60 @@ await test("expand function type", async () => {
   });
 
   assert.strictEqual(actual, "{ a: (a: number) => string }");
+});
+
+// The following tests are skipped until we find a way to resolve string literal union types
+
+await test.skip("expand a union string literal type", async () => {
+  const actual = await expandMyType({
+    sourceText: `
+      type A = "a" | "b";
+
+      type Result = {
+        a: A;
+      };
+    `,
+    typeExpression: "Result",
+  });
+
+  assert.strictEqual(actual, '{ a: "a" | "b" }');
+});
+
+await test.skip("expand an imported union string literal type", async () => {
+  const actual = await expandMyType({
+    sourceFileName: "test.ts",
+    typeExpression: "Result",
+    compilerHostFunctionOverrides: {
+      fileExists() {
+        return true;
+      },
+
+      readFile(fileName) {
+        if (fileName.endsWith("b.ts")) {
+          return `
+          export type B = "a" | "b";
+          `;
+        }
+
+        if (fileName.endsWith("a.ts")) {
+          return `
+          import { B } from "./b.ts";
+          export type A = B;
+          `;
+        }
+
+        if (fileName.endsWith("test.ts")) {
+          return `
+          import { A } from "./a.ts";
+          
+          interface Result {
+            a: A;
+          }
+          `;
+        }
+      },
+    },
+  });
+
+  assert.strictEqual(actual, '{ a: "a" | "b" }');
 });

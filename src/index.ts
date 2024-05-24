@@ -1,6 +1,11 @@
-import { createExpanderCompilerHost } from "./create-expander-compiler-host.ts";
+import { createAugmenterCompilerHost } from "./augmenter-compiler-host.ts";
+import { type CompilerHostFunctionOverrides } from "./augmenter-compiler-host.ts";
+import {
+  createExpandCodeBlock,
+  formatTypeExpression,
+} from "./code-generator.ts";
 import path from "node:path";
-import { format, type Options as PrettierOptions } from "prettier";
+import type { Options as PrettierOptions } from "prettier";
 import ts from "typescript";
 
 /**
@@ -15,7 +20,7 @@ const findTypeExpanderResultNode = (node: ts.Node): ts.Node | undefined => {
       return undefined;
     }
 
-    // Since we put the __TYPE_EXPANDER_RESULT__ type at the beginning of the
+    // Since we put the __<IDENTIFIER>__ type at the beginning of the
     // file, we can return the first identifier we find.
     return node;
   }
@@ -50,16 +55,17 @@ export type ExpandTypeOptionsBase = {
      */
     options?: PrettierOptions;
   };
+
+  /**
+   * A record of functions to override in the compiler host. Useful for mocking
+   */
+  compilerHostFunctionOverrides?: CompilerHostFunctionOverrides;
 };
 export type ExpandTypeFromSourceFileOptions = ExpandTypeOptionsBase & {
   /**
    * Name of the source file to evaluate the type expression in.
    */
   sourceFileName: string;
-  /**
-   * Function that returns the source file. When not specified, the implementation of the default TypeScript compiler host is used.
-   */
-  getSourceFileFunction?: ts.CompilerHost["getSourceFile"];
 };
 export type ExpandTypeFromSourceTextOptions = ExpandTypeOptionsBase & {
   /**
@@ -90,17 +96,14 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
   }
 
   if ("sourceText" in options) {
-    const sourceFile = ts.createSourceFile(
-      "dummy.ts",
-      options.sourceText,
-      ts.ScriptTarget.Latest,
-      true,
-    );
-
     return expandMyType({
       sourceFileName: "dummy.ts",
       typeExpression: options.typeExpression,
-      getSourceFileFunction: () => sourceFile,
+      compilerHostFunctionOverrides: {
+        readFile() {
+          return options.sourceText;
+        },
+      },
       tsCompilerOptions: options.tsCompilerOptions,
     });
   }
@@ -116,11 +119,11 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
     allowJs: true,
   };
 
-  const compilerHost = createExpanderCompilerHost(
+  const compilerHost = createAugmenterCompilerHost(
     resolvedSourceFileName,
-    options.typeExpression,
+    createExpandCodeBlock(options.typeExpression),
     tsCompilerOptions,
-    options.getSourceFileFunction,
+    options.compilerHostFunctionOverrides,
   );
 
   const program = ts.createProgram(
@@ -150,17 +153,5 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
     return expandedTypeString;
   }
 
-  const dummyTypeName = "__TYPE_EXPANDER_RESULT__";
-
-  return (
-    await format(
-      `type ${dummyTypeName} = ${expandedTypeString}`,
-      options.prettify?.options ?? {
-        parser: "typescript",
-        semi: false,
-      },
-    )
-  )
-    .trim()
-    .substring(`type ${dummyTypeName} = `.length);
+  return formatTypeExpression(expandedTypeString, options.prettify?.options);
 }
