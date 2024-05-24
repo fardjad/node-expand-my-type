@@ -18,10 +18,6 @@ export const createExpandCodeBlock = (typeExpression: string) => {
     type ${identifierPrefix}RemoveUnderscore<T extends string> = T extends \`\${infer U}_\` ? U : never;`;
 };
 
-export const createSimpleTypeAlias = (typeExpression: string) => {
-  return `type ${identifierPrefix}Result = ${typeExpression};`;
-};
-
 export const formatTypeExpression = async (
   code: string,
   prettierOptions?: PrettierOptions,
