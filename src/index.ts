@@ -9,12 +9,12 @@ import type { Options as PrettierOptions } from "prettier";
 import ts from "typescript";
 
 /**
- * Finds the node that represents the TYPE_EXPANDER_RESULT type.
+ * Finds the result type identifier node.
  *
- * @param node Node in which the TYPE_EXPANDER_RESULT type should be searched.
- * @returns The node that represents the TYPE_EXPANDER_RESULT type.
+ * @param node Node in which type type should be searched.
+ * @returns The result type identifier node.
  */
-const findTypeExpanderResultNode = (node: ts.Node): ts.Node | undefined => {
+const findResultIdentifierNode = (node: ts.Node): ts.Node | undefined => {
   if (node.getChildCount() == 0) {
     if (!ts.isIdentifier(node)) {
       return undefined;
@@ -25,7 +25,7 @@ const findTypeExpanderResultNode = (node: ts.Node): ts.Node | undefined => {
     return node;
   }
 
-  return ts.forEachChild(node, findTypeExpanderResultNode);
+  return ts.forEachChild(node, findResultIdentifierNode);
 };
 
 export type ExpandTypeOptionsBase = {
@@ -137,14 +137,14 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
     throw new Error("Source file not found!");
   }
 
-  const firstIdentifier = findTypeExpanderResultNode(sourceFile);
-  if (!firstIdentifier) {
+  const resultIdentifierNode = findResultIdentifierNode(sourceFile);
+  if (!resultIdentifierNode) {
     throw new Error("No node found!");
   }
 
   const typeChecker = program.getTypeChecker();
   const expandedTypeString = typeChecker.typeToString(
-    typeChecker.getTypeAtLocation(firstIdentifier),
+    typeChecker.getTypeAtLocation(resultIdentifierNode),
     undefined,
     ts.TypeFormatFlags.NodeBuilderFlagsMask,
   );

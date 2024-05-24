@@ -111,12 +111,11 @@ await test("expand function type", async () => {
   assert.strictEqual(actual, "{ a: (a: number) => string }");
 });
 
-// The following tests are skipped until we find a way to resolve string literal union types
-
-await test.skip("expand a union string literal type", async () => {
+await test("expand a union string literal type", async () => {
   const actual = await expandMyType({
     sourceText: `
-      type A = "a" | "b";
+      type B = "a" | "b";
+      type A = B;
 
       type Result = {
         a: A;
@@ -128,7 +127,7 @@ await test.skip("expand a union string literal type", async () => {
   assert.strictEqual(actual, '{ a: "a" | "b" }');
 });
 
-await test.skip("expand an imported union string literal type", async () => {
+await test("expand an imported union string literal type", async () => {
   const actual = await expandMyType({
     sourceFileName: "test.ts",
     typeExpression: "Result",

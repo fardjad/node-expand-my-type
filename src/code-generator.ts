@@ -10,7 +10,12 @@ export const createExpandCodeBlock = (typeExpression: string) => {
 
     type ${identifierPrefix}Expand<T> = T extends (...args: infer A) => infer R
       ? (...args: ${identifierPrefix}Expand<A>) => ${identifierPrefix}Expand<R>
-      : { [K in keyof T]: ${identifierPrefix}Expand<T[K]>; } & {};`;
+      : { [K in keyof T]: T[K] extends string ? ${identifierPrefix}ExpandString<T[K]> : ${identifierPrefix}Expand<T[K]>; } & {};
+
+    // Forces a union of string literal types to be expanded
+    type ${identifierPrefix}ExpandString<T extends string> = ${identifierPrefix}RemoveUnderscore<${identifierPrefix}AppendUnderscore<T>>;
+    type ${identifierPrefix}AppendUnderscore<T extends string> = \`\${T}_\` extends string ? \`\${T}_\` : never;
+    type ${identifierPrefix}RemoveUnderscore<T extends string> = T extends \`\${infer U}_\` ? U : never;`;
 };
 
 export const createSimpleTypeAlias = (typeExpression: string) => {
