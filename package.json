@@ -1,6 +1,6 @@
 {
   "name": "expand-my-type",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Expand TypeScript type expressions programmatically",
   "keywords": [
     "expand",
@@ -51,7 +51,7 @@
     "test": "tsx --test --test-reporter spec ./src/index.test.ts"
   },
   "dependencies": {
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.0",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
