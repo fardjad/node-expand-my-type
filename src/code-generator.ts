@@ -8,8 +8,9 @@ export const createExpandCodeBlock = (typeExpression: string) => {
   return `type ${identifierPrefix}Result = ${identifierPrefix}Expand<${identifierPrefix}Expression>;
     type ${identifierPrefix}Expression = ${typeExpression};
 
-    type ${identifierPrefix}Expand<T> = T extends (...args: infer A) => infer R
-      ? (...args: ${identifierPrefix}Expand<A>) => ${identifierPrefix}Expand<R>
+    type ${identifierPrefix}Expand<T> = 
+        T extends (...args: infer A) => infer R ? (...args: ${identifierPrefix}Expand<A & {}>) => ${identifierPrefix}Expand<R & {}>
+      : T extends Promise<infer U> ? Promise<${identifierPrefix}Expand<U & {}>>
       : { [K in keyof T]: T[K] extends string ? ${identifierPrefix}ExpandString<T[K]> : ${identifierPrefix}Expand<T[K]>; } & {};
 
     // Forces a union of string literal types to be expanded

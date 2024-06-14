@@ -13,7 +13,7 @@ export type CompilerHostFunctionOverrides = Partial<
  * @param sourceFileName Name of the source file to augment.
  * @param codeToAdd Type expression.
  * @param compilerOptions TypeScript compiler options.
- * @param readFileFunction
+ * @param compilerHostFunctionOverrides A record of functions to override in the compiler host. Useful for mocking.
  * @returns A custom compiler host that returns an augmented source file that can be used to expand the type expression.
  */
 export const createAugmenterCompilerHost = (

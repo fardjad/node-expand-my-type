@@ -96,12 +96,18 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
   }
 
   if ("sourceText" in options) {
+    const dummyFileName = "expand-my-type-dummy.ts";
+
     return expandMyType({
-      sourceFileName: "dummy.ts",
+      sourceFileName: dummyFileName,
       typeExpression: options.typeExpression,
       compilerHostFunctionOverrides: {
-        readFile() {
-          return options.sourceText;
+        readFile(fileName: string) {
+          if (path.basename(fileName) === dummyFileName) {
+            return options.sourceText;
+          }
+
+          return ts.sys.readFile(fileName);
         },
       },
       tsCompilerOptions: options.tsCompilerOptions,
