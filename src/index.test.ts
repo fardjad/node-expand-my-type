@@ -1,3 +1,4 @@
+import { formatTypeExpression } from "./code-generator.ts";
 import { expandMyType } from "./index.ts";
 import assert from "node:assert";
 import path from "node:path";
@@ -122,10 +123,49 @@ await test("expand a promise type", async () => {
 
       type Result = {
         a: Promise<A>;
+        b: Promise<number>;
+        c: Promise<null>;
+        d: Promise<undefined>;
+        e: Promise<never>;
+        f: Promise<void>;
       };
     `,
     typeExpression: "Result",
   });
 
-  assert.strictEqual(actual, `{ a: Promise<"a" | "b"> }`);
+  assert.strictEqual(
+    actual,
+    await formatTypeExpression(`{
+      a: Promise<"a" | "b">
+      b: Promise<number>
+      c: Promise<null>
+      d: Promise<undefined>
+      e: Promise<never>
+      f: Promise<void>
+    }`),
+  );
+});
+
+await test("expand simple types", async () => {
+  const actual = await expandMyType({
+    sourceText: `
+      type Result = {
+        a: string;
+        b: number;
+        c: boolean;
+        d: null;
+        e: undefined;
+        f: symbol;
+        g: void;
+      };
+    `,
+    typeExpression: "Result",
+  });
+
+  assert.strictEqual(
+    actual,
+    await formatTypeExpression(
+      `{ a: string; b: number; c: boolean; d: null; e: undefined; f: symbol; g: void }`,
+    ),
+  );
 });

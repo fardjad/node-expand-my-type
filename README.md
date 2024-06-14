@@ -146,10 +146,16 @@ Expand My Type uses the following utility types to expand the type expression:
 type Expand<T> = T extends (...args: infer A) => infer R
   ? (...args: Expand<A>) => Expand<R>
   : T extends Promise<infer U>
-    ? Promise<Expand<U & {}>>
+    ? Promise<ExpandTypeArgument<U>>
     : {
         [K in keyof T]: T[K] extends string ? ExpandString<T[K]> : Expand<T[K]>;
       } & {};
+
+type ExpandTypeArgument<T> = [T & {}] extends [never]
+  ? T
+  : T & {} extends void
+    ? T
+    : Expand<T & {}>;
 
 // Forces a union of string literal types to be expanded
 type ExpandString<T extends string> = RemoveUnderscore<AppendUnderscore<T>>;

@@ -111,6 +111,7 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
         },
       },
       tsCompilerOptions: options.tsCompilerOptions,
+      prettify: options.prettify,
     });
   }
 
@@ -119,11 +120,16 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
   const tsCompilerOptions = options.tsCompilerOptions ?? {
     noEmit: true,
 
+    strictNullChecks: true,
     allowSyntheticDefaultImports: true,
     allowArbitraryExtensions: true,
     allowImportingTsExtensions: true,
     allowJs: true,
   };
+
+  if (!tsCompilerOptions.strictNullChecks) {
+    throw new Error("strictNullChecks must be enabled!");
+  }
 
   const compilerHost = createAugmenterCompilerHost(
     resolvedSourceFileName,
