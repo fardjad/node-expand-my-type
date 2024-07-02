@@ -1,6 +1,6 @@
 {
   "name": "expand-my-type",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Expand TypeScript type expressions programmatically",
   "keywords": [
     "expand",
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "prettier": "^3.3.2",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.3"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
