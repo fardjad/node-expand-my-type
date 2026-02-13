@@ -12,6 +12,7 @@ on:
 
 permissions:
   id-token: write # Required for OIDC
+  contents: write
 
 jobs:
   test:
@@ -81,7 +82,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
-          node-version: 20
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
       - uses: actions/cache@main
         env:
