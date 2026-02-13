@@ -10,6 +10,9 @@ on:
     paths-ignore:
       - "LICENSE"
 
+permissions:
+  id-token: write # Required for OIDC
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -96,5 +99,3 @@ jobs:
           npm ci
       - name: Publish
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
