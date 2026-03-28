@@ -1,4 +1,4 @@
-import { A } from "./a.ts";
+import { A } from "./a.js";
 
 interface Result {
   a: A;

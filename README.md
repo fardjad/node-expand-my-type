@@ -137,6 +137,15 @@ the following ways:
    /* { a: string; b: number } */
    ```
 
+For local development in this repository, use Bun:
+
+```sh
+bun install
+bun run check
+bun run build
+bun run deps:update
+```
+
 ## How It Works
 
 Expand My Type uses the following utility types to expand the type expression:

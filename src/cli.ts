@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { expandMyType } from "./index.ts";
+import { expandMyType } from "./index.js";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import ts from "typescript";
 
@@ -27,7 +27,7 @@ const tryParse = <
     });
   } catch (error) {
     return {
-      error,
+      error: error instanceof Error ? error : new Error(String(error)),
       values: {} as Values,
       positionals: [],
     };

@@ -17,31 +17,17 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: ["lts/*", latest]
-      fail-fast: true
     steps:
       - uses: actions/checkout@main
-      - uses: actions/setup-node@main
+      - uses: oven-sh/setup-bun@main
         with:
-          node-version: ${{ matrix.node }}
-          check-latest: true
-      - name: Cache node modules
-        uses: actions/cache@main
-        env:
-          cache-name: cache-node-${{ matrix.node }}-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          bun-version: "latest"
       - name: Install
-        run: npm ci
-      - name: Tests
-        run: npm test
+        run: bun install --frozen-lockfile
+      - name: Check
+        run: bun run check
+      - name: Build
+        run: bun run build
   version-check:
     runs-on: ubuntu-latest
     needs: test
@@ -51,11 +37,37 @@ jobs:
       version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@main
-      - id: check
-        uses: EndBug/version-check@v2
         with:
-          diff-search: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@main
+        with:
+          bun-version: "latest"
+      - name: Fetch tags
+        run: git fetch --force --tags
+      - id: check
+        shell: bun {0}
+        run: |
+          import { $ } from "bun";
+
+          const githubOutput = process.env.GITHUB_OUTPUT;
+          if (!githubOutput) {
+            throw new Error("GITHUB_OUTPUT is not set");
+          }
+
+          const { version } = await Bun.file("package.json").json();
+          const tagRef = `refs/tags/v${version}`;
+
+          let changed = "true";
+
+          try {
+            await $`git rev-parse -q --verify ${tagRef}`.text();
+            changed = "false";
+          } catch {}
+
+          await Bun.write(
+            githubOutput,
+            `version=${version}\nchanged=${changed}\n`,
+          );
   release:
     runs-on: ubuntu-latest
     needs: version-check
@@ -74,29 +86,22 @@ jobs:
           name: v${{ needs.version-check.outputs.version }}
           tag: v${{ needs.version-check.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
-  npm-publish:
+  publish:
     runs-on: ubuntu-latest
     needs: release
     if: needs.version-check.outputs.changed == 'true'
     steps:
       - uses: actions/checkout@main
-      - uses: actions/setup-node@main
+      - uses: oven-sh/setup-bun@main
         with:
-          node-version: 24
-          registry-url: "https://registry.npmjs.org"
-      - uses: actions/cache@main
-        env:
-          cache-name: cache-node-${{ matrix.node }}-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          bun-version: "latest"
       - name: Install
-        run: |
-          set -e
-          npm ci
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Publish
-        run: npm publish
+        run: bun publish

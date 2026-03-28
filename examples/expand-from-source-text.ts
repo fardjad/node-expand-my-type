@@ -1,4 +1,4 @@
-import { expandMyType } from "../src/index.ts";
+import { expandMyType } from "../src/index.js";
 
 const expandedType = await expandMyType({
   typeExpression: "A<number>",

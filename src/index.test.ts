@@ -1,5 +1,5 @@
-import { formatTypeExpression } from "./code-generator.ts";
-import { expandMyType } from "./index.ts";
+import { formatTypeExpression } from "./code-generator.js";
+import { expandMyType } from "./index.js";
 import assert from "node:assert";
 import path from "node:path";
 import { test } from "node:test";

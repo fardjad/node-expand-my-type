@@ -23,8 +23,17 @@ export const createAugmenterCompilerHost = (
   compilerHostFunctionOverrides?: CompilerHostFunctionOverrides,
 ) => {
   const customCompilerHost = ts.createCompilerHost(compilerOptions ?? {}, true);
-  for (const key of Object.keys(compilerHostFunctionOverrides ?? {})) {
-    customCompilerHost[key] = compilerHostFunctionOverrides![key];
+  const overrides = compilerHostFunctionOverrides ?? {};
+
+  for (const key of Object.keys(overrides) as Array<
+    keyof CompilerHostFunctionOverrides
+  >) {
+    const override = overrides[key];
+
+    if (override) {
+      (customCompilerHost as unknown as Record<string, unknown>)[key] =
+        override;
+    }
   }
 
   const originalReadFile = customCompilerHost.readFile;

@@ -4,8 +4,8 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "allowSyntheticDefaultImports": true,
-    "allowImportingTsExtensions": true,
     "strictNullChecks": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   }
 }

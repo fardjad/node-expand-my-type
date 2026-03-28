@@ -1,9 +1,9 @@
-import { createAugmenterCompilerHost } from "./augmenter-compiler-host.ts";
-import { type CompilerHostFunctionOverrides } from "./augmenter-compiler-host.ts";
+import { createAugmenterCompilerHost } from "./augmenter-compiler-host.js";
+import { type CompilerHostFunctionOverrides } from "./augmenter-compiler-host.js";
 import {
   createExpandCodeBlock,
   formatTypeExpression,
-} from "./code-generator.ts";
+} from "./code-generator.js";
 import path from "node:path";
 import type { Options as PrettierOptions } from "prettier";
 import ts from "typescript";

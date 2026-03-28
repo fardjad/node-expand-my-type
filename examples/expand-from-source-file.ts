@@ -1,4 +1,4 @@
-import { expandMyType } from "../src/index.ts";
+import { expandMyType } from "../src/index.js";
 import { fileURLToPath } from "node:url";
 
 const expandedType = await expandMyType({
