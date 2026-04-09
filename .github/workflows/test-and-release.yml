@@ -11,8 +11,7 @@ on:
       - "LICENSE"
 
 permissions:
-  id-token: write # Required for OIDC
-  contents: write
+  id-token: write
 
 jobs:
   test:
@@ -24,68 +23,78 @@ jobs:
           bun-version: "latest"
       - name: Install
         run: bun install --frozen-lockfile
-      - name: Check
-        run: bun run check
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
       - name: Build
         run: bun run build
+      - name: Tests
+        run: bun run test
   version-check:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
     outputs:
       changed: ${{ steps.check.outputs.changed }}
       version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@main
-        with:
-          fetch-depth: 0
       - uses: oven-sh/setup-bun@main
         with:
-          bun-version: "latest"
-      - name: Fetch tags
-        run: git fetch --force --tags
+          bun-version: latest
       - id: check
         shell: bun {0}
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          import { $ } from "bun";
+          const currentPackage = await Bun.file("package.json").json();
+          const currentVersion = currentPackage.version;
+          const beforeSha = process.env.GITHUB_EVENT_BEFORE;
+          let previousVersion;
 
-          const githubOutput = process.env.GITHUB_OUTPUT;
-          if (!githubOutput) {
-            throw new Error("GITHUB_OUTPUT is not set");
+          if (beforeSha && !/^0+$/.test(beforeSha)) {
+            const response = await fetch(
+              `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/contents/package.json?ref=${beforeSha}`,
+              {
+                headers: {
+                  Accept: "application/vnd.github+json",
+                  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                },
+              },
+            );
+
+            if (response.ok) {
+              const previousPackage = JSON.parse(
+                Buffer.from((await response.json()).content, "base64").toString("utf8"),
+              );
+              previousVersion = previousPackage.version;
+            }
           }
 
-          const { version } = await Bun.file("package.json").json();
-          const tagRef = `refs/tags/v${version}`;
-
-          let changed = "true";
-
-          try {
-            await $`git rev-parse -q --verify ${tagRef}`.text();
-            changed = "false";
-          } catch {}
-
+          const changed = previousVersion !== currentVersion;
           await Bun.write(
-            githubOutput,
-            `version=${version}\nchanged=${changed}\n`,
+            process.env.GITHUB_OUTPUT,
+            `changed=${changed}\nversion=${currentVersion}\n`,
           );
   release:
     runs-on: ubuntu-latest
     needs: version-check
     if: needs.version-check.outputs.changed == 'true'
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@main
-      - name: "Add $GITHUB_WORKSPACE to git safe directories"
+      - name: Create release
         run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE || exit 1
-      - uses: rickstaa/action-create-tag@main
-        with:
-          tag: v${{ needs.version-check.outputs.version }}
-          message: v${{ needs.version-check.outputs.version }}
-      - uses: ncipollo/release-action@main
-        with:
-          name: v${{ needs.version-check.outputs.version }}
-          tag: v${{ needs.version-check.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          gh release create "v${{ needs.version-check.outputs.version }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v${{ needs.version-check.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish:
     runs-on: ubuntu-latest
     needs: release
@@ -94,7 +103,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: oven-sh/setup-bun@main
         with:
-          bun-version: "latest"
+          bun-version: latest
       - name: Install
         run: bun install --frozen-lockfile
       - name: Build

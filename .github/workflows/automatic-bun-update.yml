@@ -1,0 +1,38 @@
+name: automatic-bun-update
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  automatic-bun-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@main
+        with:
+          app-id: ${{ vars.AUTO_MAINTENANCE_APP_ID }}
+          private-key: ${{ secrets.AUTO_MAINTENANCE_APP_PRIVATE_KEY }}
+      - uses: oven-sh/setup-bun@main
+        with:
+          bun-version: latest
+      - name: Cache Bun packages
+        uses: actions/cache@main
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock', '**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+      - uses: fardjad/my-actions/automatic-bun-update@main
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          upgrade-options: --latest --no-progress
+          verify-script: |
+            bun run build
+            bun run test
+          post-update-commands: |
+            bun run fix
+            bun pm version patch --no-git-tag-version

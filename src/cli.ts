@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { expandMyType } from "./index.js";
-import { parseArgs, type ParseArgsConfig } from "node:util";
+import { type ParseArgsConfig, parseArgs } from "node:util";
 import ts from "typescript";
+import { expandMyType } from "./index.js";
 
 type Values = {
   help?: boolean;
-  prettify: boolean;
+  prettify?: boolean;
+  "no-prettify"?: boolean;
   tsconfig?: string;
 };
 
@@ -95,18 +96,19 @@ const usagePrompt = [
   "  -c, --tsconfig <file>\t\tUse the specified tsconfig.json file",
 ].join("\n");
 
-if (positionals.length !== 2) {
-  console.error(usagePrompt);
-  process.exit(1);
-}
-
 if (values.help) {
   console.error(usagePrompt);
   process.exit(0);
 }
 
+if (positionals.length !== 2) {
+  console.error(usagePrompt);
+  process.exit(1);
+}
+
 const [sourceFileName, typeExpression] = positionals;
-const { prettify, tsconfig: tsConfigFileName } = values;
+const prettify = values.prettify ?? true;
+const tsConfigFileName = values.tsconfig;
 
 let tsParsedCommandLine: ts.ParsedCommandLine | undefined;
 

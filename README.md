@@ -18,8 +18,7 @@ expanded form as a string. That can be useful for code-generation, testing, and
 debugging complex type errors.
 
 Under the hood, it uses the [TypeScript Compiler API][ts-compiler-api] to expand
-the type expression and optionally formats the output using
-[Prettier][prettier].
+the type expression and optionally formats the output using Biome.
 
 ## CLI
 
@@ -137,6 +136,30 @@ the following ways:
    /* { a: string; b: number } */
    ```
 
+Advanced users can pass Biome configuration directly:
+
+```typescript
+import { expandMyType } from "expand-my-type";
+
+const expandedType = await expandMyType({
+  typeExpression: "SomeType",
+  sourceFileName: "./example.ts",
+  prettify: {
+    biomeOptions: {
+      formatter: {
+        indentStyle: "space",
+        lineWidth: 120,
+      },
+      javascript: {
+        formatter: {
+          semicolons: "always",
+        },
+      },
+    },
+  },
+});
+```
+
 For local development in this repository, use Bun:
 
 ```sh
@@ -178,5 +201,4 @@ This approach comes with some limitations. Most notably, expanding a type that
 leads to an infinite recursion might throw an error (when prettify option is
 enabled), return a truncated output, or return any.
 
-[prettier]: https://prettier.io
 [ts-compiler-api]: https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API

@@ -1,9 +1,9 @@
-import { formatTypeExpression } from "./code-generator.js";
-import { expandMyType } from "./index.js";
 import assert from "node:assert";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { formatTypeExpression } from "./code-generator.js";
+import { expandMyType } from "./index.js";
 
 const __dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
 const fixturesDirectory = path.join(__dirname, "fixtures");

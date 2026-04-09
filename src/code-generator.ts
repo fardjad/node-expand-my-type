@@ -1,7 +1,23 @@
-import type { Options as PrettierOptions } from "prettier";
-import { format } from "prettier";
+import { Biome } from "@biomejs/js-api/nodejs";
+import type { Configuration as BiomeConfiguration } from "@biomejs/wasm-nodejs";
 
 const identifierPrefix = "__EXPAND_MY_TYPE__";
+const virtualFormatFileName = "expand-my-type.ts";
+const biome = new Biome();
+const { projectKey } = biome.openProject();
+
+const defaultBiomeConfiguration: BiomeConfiguration = {
+  formatter: {
+    enabled: true,
+    indentStyle: "space",
+  },
+  javascript: {
+    formatter: {
+      quoteStyle: "double",
+      semicolons: "asNeeded",
+    },
+  },
+};
 
 export const createExpandCodeBlock = (typeExpression: string) => {
   // https://github.com/microsoft/TypeScript/blob/main/tests/cases/compiler/computedTypesKeyofNoIndexSignatureType.ts
@@ -23,17 +39,40 @@ export const createExpandCodeBlock = (typeExpression: string) => {
 
 export const formatTypeExpression = async (
   code: string,
-  prettierOptions?: PrettierOptions,
+  biomeConfiguration?: BiomeConfiguration,
 ) => {
-  return (
-    await format(
-      `type ${identifierPrefix} = ${code}`,
-      prettierOptions ?? {
-        parser: "typescript",
-        semi: false,
-      },
-    )
-  )
-    .trim()
-    .substring(`type ${identifierPrefix} = `.length);
+  const input = `type ${identifierPrefix} = ${code}`;
+  const javascriptFormatter = {
+    ...defaultBiomeConfiguration.javascript?.formatter,
+    ...biomeConfiguration?.javascript?.formatter,
+  };
+
+  biome.applyConfiguration(projectKey, {
+    ...defaultBiomeConfiguration,
+    ...biomeConfiguration,
+    formatter: {
+      ...defaultBiomeConfiguration.formatter,
+      ...biomeConfiguration?.formatter,
+    },
+    javascript: {
+      ...defaultBiomeConfiguration.javascript,
+      ...biomeConfiguration?.javascript,
+      formatter: javascriptFormatter,
+    },
+  });
+
+  const result = biome.formatContent(projectKey, input, {
+    filePath: virtualFormatFileName,
+  });
+
+  if (result.diagnostics.length > 0) {
+    throw new Error(
+      biome.printDiagnostics(result.diagnostics, {
+        filePath: virtualFormatFileName,
+        fileSource: input,
+      }),
+    );
+  }
+
+  return result.content.trim().substring(`type ${identifierPrefix} = `.length);
 };

@@ -1,7 +1,7 @@
 import ts from "typescript";
 
 type ExtractFunctions<T, K extends keyof T = keyof T> = {
-  [P in K]: T[P] extends (...args: any[]) => any ? T[P] : never;
+  [P in K]: Extract<T[P], (...args: never[]) => unknown>;
 };
 export type CompilerHostFunctionOverrides = Partial<
   ExtractFunctions<ts.CompilerHost>

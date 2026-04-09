@@ -1,12 +1,14 @@
-import { createAugmenterCompilerHost } from "./augmenter-compiler-host.js";
-import { type CompilerHostFunctionOverrides } from "./augmenter-compiler-host.js";
+import path from "node:path";
+import type { Configuration as BiomeConfiguration } from "@biomejs/wasm-nodejs";
+import ts from "typescript";
+import {
+  type CompilerHostFunctionOverrides,
+  createAugmenterCompilerHost,
+} from "./augmenter-compiler-host.js";
 import {
   createExpandCodeBlock,
   formatTypeExpression,
 } from "./code-generator.js";
-import path from "node:path";
-import type { Options as PrettierOptions } from "prettier";
-import ts from "typescript";
 
 /**
  * Finds the result type identifier node.
@@ -15,7 +17,7 @@ import ts from "typescript";
  * @returns The result type identifier node.
  */
 const findResultIdentifierNode = (node: ts.Node): ts.Node | undefined => {
-  if (node.getChildCount() == 0) {
+  if (node.getChildCount() === 0) {
     if (!ts.isIdentifier(node)) {
       return undefined;
     }
@@ -41,7 +43,7 @@ export type ExpandTypeOptionsBase = {
   tsCompilerOptions?: ts.CompilerOptions;
 
   /**
-   * Prettier options.
+   * Prettify options.
    */
   prettify?: {
     /**
@@ -50,10 +52,9 @@ export type ExpandTypeOptionsBase = {
      */
     enabled?: boolean;
     /**
-     * Prettier options. Don't forget to set the parser to "typescript".
-     * @default { parser: "typescript", semi: false }
+     * Biome formatting configuration.
      */
-    options?: PrettierOptions;
+    biomeOptions?: BiomeConfiguration;
   };
 
   /**
@@ -161,9 +162,12 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
     ts.TypeFormatFlags.NodeBuilderFlagsMask,
   );
 
-  if (options.prettify && options.prettify.enabled === false) {
+  if (options.prettify?.enabled === false) {
     return expandedTypeString;
   }
 
-  return formatTypeExpression(expandedTypeString, options.prettify?.options);
+  return formatTypeExpression(
+    expandedTypeString,
+    options.prettify?.biomeOptions,
+  );
 }
