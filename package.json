@@ -1,6 +1,6 @@
 {
   "name": "expand-my-type",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Expand TypeScript type expressions programmatically",
   "keywords": [
     "expand",
@@ -54,6 +54,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
-    "@types/node": "^25.5.0"
+    "@types/node": "^25.5.2"
   }
 }
