@@ -5,13 +5,13 @@
     "": {
       "name": "expand-my-type",
       "dependencies": {
-        "@biomejs/js-api": "latest",
-        "@biomejs/wasm-nodejs": "latest",
-        "typescript": "latest",
+        "@biomejs/js-api": "^6.0.0",
+        "@biomejs/wasm-nodejs": "^2.4.10",
+        "typescript": "^6.0.2",
       },
       "devDependencies": {
-        "@biomejs/biome": "latest",
-        "@types/node": "latest",
+        "@biomejs/biome": "2.4.10",
+        "@types/node": "^25.5.0",
       },
     },
   },
@@ -34,7 +34,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.10", "", { "os": "win32", "cpu": "x64" }, "sha512-aW/JU5GuyH4uxMrNYpoC2kjaHlyJGLgIa3XkhPEZI0uKhZhJZU8BuEyJmvgzSPQNGozBwWjC972RaNdcJ9KyJg=="],
 
-    "@biomejs/js-api": ["@biomejs/js-api@4.0.0", "", { "peerDependencies": { "@biomejs/wasm-bundler": "^2.3.0", "@biomejs/wasm-nodejs": "^2.3.0", "@biomejs/wasm-web": "^2.3.0" }, "optionalPeers": ["@biomejs/wasm-bundler", "@biomejs/wasm-nodejs", "@biomejs/wasm-web"] }, "sha512-EOArR/6drRzM1/hwOIz1pZw90FL31Ud4Y7hEHGWVtMNmAwS9SrwZ8hMENGlLVXCeGW/kL46p8kX7eO6x9Nmezg=="],
+    "@biomejs/js-api": ["@biomejs/js-api@6.0.0", "", { "peerDependencies": { "@biomejs/wasm-bundler": "^2.5.0", "@biomejs/wasm-nodejs": "^2.5.0", "@biomejs/wasm-web": "^2.5.0" }, "optionalPeers": ["@biomejs/wasm-bundler", "@biomejs/wasm-nodejs", "@biomejs/wasm-web"] }, "sha512-8HP7wexjQo5Np1J9h0B2x8L5G0GZpCacgjykxLHtvLPvF0hNqSG754oh8bxo+OSFDpVGMfSjmLO+ZY/5KbfjmQ=="],
 
     "@biomejs/wasm-nodejs": ["@biomejs/wasm-nodejs@2.4.10", "", {}, "sha512-WG+5mniFUNery9qnByTR2fKkOVroZYbwiJby2B/o8X7/pVA/3dr1EJSCHOearjC26rgjaXXkfb6kmfHiO2cOhA=="],
 
