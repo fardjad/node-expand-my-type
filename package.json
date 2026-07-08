@@ -50,7 +50,7 @@
   "dependencies": {
     "@biomejs/js-api": "^4.0.0",
     "@biomejs/wasm-nodejs": "^2.4.10",
-    "typescript": "^6.0.2"
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
