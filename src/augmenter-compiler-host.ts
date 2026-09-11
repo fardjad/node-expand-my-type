@@ -1,56 +1,55 @@
-import ts from "typescript";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import type { FileSystem } from "typescript/unstable/fs";
 
-type ExtractFunctions<T, K extends keyof T = keyof T> = {
-  [P in K]: Extract<T[P], (...args: never[]) => unknown>;
-};
-export type CompilerHostFunctionOverrides = Partial<
-  ExtractFunctions<ts.CompilerHost>
->;
+export type CompilerHostFunctionOverrides = Partial<FileSystem>;
 
 /**
- * Creates a custom compiler host that augments the specified source file for expanding a type expression.
+ * Creates the virtual filesystem used by TypeScript's native compiler API.
  *
  * @param sourceFileName Name of the source file to augment.
  * @param codeToAdd Type expression.
- * @param compilerOptions TypeScript compiler options.
- * @param compilerHostFunctionOverrides A record of functions to override in the compiler host. Useful for mocking.
- * @returns A custom compiler host that returns an augmented source file that can be used to expand the type expression.
+ * @param compilerHostFunctionOverrides A record of filesystem functions to override.
+ * @returns A virtual filesystem for a TypeScript API session.
  */
 export const createAugmenterCompilerHost = (
   sourceFileName: string,
   codeToAdd: string,
-  compilerOptions?: ts.CompilerOptions,
   compilerHostFunctionOverrides?: CompilerHostFunctionOverrides,
-) => {
-  const customCompilerHost = ts.createCompilerHost(compilerOptions ?? {}, true);
+): FileSystem => {
   const overrides = compilerHostFunctionOverrides ?? {};
 
-  for (const key of Object.keys(overrides) as Array<
-    keyof CompilerHostFunctionOverrides
-  >) {
-    const override = overrides[key];
+  return {
+    ...overrides,
+    readFile: (fileName) => {
+      let contents: string | null | undefined;
 
-    if (override) {
-      (customCompilerHost as unknown as Record<string, unknown>)[key] =
-        override;
-    }
-  }
+      if (overrides.readFile) {
+        contents = overrides.readFile(fileName);
+        if (contents === undefined) {
+          try {
+            contents = readFileSync(fileName, "utf8");
+          } catch {
+            contents = null;
+          }
+        }
+      } else {
+        try {
+          contents = readFileSync(fileName, "utf8");
+        } catch {
+          contents = null;
+        }
+      }
 
-  const originalReadFile = customCompilerHost.readFile;
+      if (contents === undefined || contents === null) {
+        return contents;
+      }
 
-  customCompilerHost.readFile = (fileName) => {
-    const contents = originalReadFile(fileName);
+      if (path.resolve(fileName) !== path.resolve(sourceFileName)) {
+        return contents;
+      }
 
-    if (contents === undefined) {
-      return contents;
-    }
-
-    if (fileName !== sourceFileName) {
-      return contents;
-    }
-
-    return `${codeToAdd}\n${contents}`;
+      return `${codeToAdd}\n${contents}`;
+    },
   };
-
-  return customCompilerHost;
 };

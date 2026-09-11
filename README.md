@@ -160,6 +160,11 @@ const expandedType = await expandMyType({
 });
 ```
 
+`tsCompilerOptions` can also be supplied to use TypeScript compiler settings for
+the expansion. `strictNullChecks` must remain enabled. The TypeScript 7 unstable
+API does not accept compiler options directly on a snapshot, so the library
+applies these options through an in-memory project configuration.
+
 For local development in this repository, use Bun:
 
 ```sh

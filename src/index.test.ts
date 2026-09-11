@@ -52,6 +52,43 @@ await test("invalid source", async () => {
   assert.strictEqual(actual, "string");
 });
 
+await test("source text merges readFile overrides", async () => {
+  const actual = await expandMyType({
+    sourceText: "type Result = number;",
+    typeExpression: "Result",
+    compilerHostFunctionOverrides: {
+      readFile(fileName) {
+        if (path.basename(fileName) === "expand-my-type-dummy.ts") {
+          return "type Result = string;";
+        }
+
+        return undefined;
+      },
+    },
+    prettify: { enabled: false },
+  });
+
+  assert.strictEqual(actual, "number");
+});
+
+await test("compiler options are applied by the unstable API", async () => {
+  const sourceText = "type Result = Promise<string>;";
+  const defaultResult = await expandMyType({
+    sourceText,
+    typeExpression: "Result",
+    prettify: { enabled: false },
+  });
+  const noLibResult = await expandMyType({
+    sourceText,
+    typeExpression: "Result",
+    tsCompilerOptions: { strictNullChecks: true, noLib: true },
+    prettify: { enabled: false },
+  });
+
+  assert.strictEqual(defaultResult, "Promise<string>");
+  assert.strictEqual(noLibResult, "any");
+});
+
 await test("source is a complex object", async () => {
   const result = await expandMyType({
     sourceText: `

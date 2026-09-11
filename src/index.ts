@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { Configuration as BiomeConfiguration } from "@biomejs/wasm-nodejs";
-import ts from "typescript";
+import * as tsAst from "typescript/unstable/ast";
+import * as ts from "typescript/unstable/async";
 import {
   type CompilerHostFunctionOverrides,
   createAugmenterCompilerHost,
@@ -16,18 +17,18 @@ import {
  * @param node Node in which type type should be searched.
  * @returns The result type identifier node.
  */
-const findResultIdentifierNode = (node: ts.Node): ts.Node | undefined => {
-  if (node.getChildCount() === 0) {
-    if (!ts.isIdentifier(node)) {
-      return undefined;
-    }
+const findResultIdentifierNode = (node: tsAst.Node): tsAst.Node | undefined => {
+  let result: tsAst.Node | undefined;
 
-    // Since we put the __<IDENTIFIER>__ type at the beginning of the
-    // file, we can return the first identifier we find.
-    return node;
+  if (tsAst.isIdentifier(node)) {
+    result = node;
+  } else {
+    node.forEachChild((child) => {
+      result ??= findResultIdentifierNode(child);
+    });
   }
 
-  return ts.forEachChild(node, findResultIdentifierNode);
+  return result;
 };
 
 export type ExpandTypeOptionsBase = {
@@ -103,12 +104,13 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
       sourceFileName: dummyFileName,
       typeExpression: options.typeExpression,
       compilerHostFunctionOverrides: {
+        ...options.compilerHostFunctionOverrides,
         readFile(fileName: string) {
           if (path.basename(fileName) === dummyFileName) {
             return options.sourceText;
           }
 
-          return ts.sys.readFile(fileName);
+          return options.compilerHostFunctionOverrides?.readFile?.(fileName);
         },
       },
       tsCompilerOptions: options.tsCompilerOptions,
@@ -120,7 +122,6 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
 
   const tsCompilerOptions = options.tsCompilerOptions ?? {
     noEmit: true,
-
     strictNullChecks: true,
     allowSyntheticDefaultImports: true,
     allowArbitraryExtensions: true,
@@ -132,42 +133,88 @@ export async function expandMyType(options: ExpandMyTypeOptions) {
     throw new Error("strictNullChecks must be enabled!");
   }
 
+  // The TypeScript 7 unstable API does not accept compiler options directly
+  // in updateSnapshot. Supply them through a virtual project configuration.
+  const virtualConfigFileName = path.join(
+    process.cwd(),
+    "expand-my-type-tsconfig.json",
+  );
+  const virtualConfig = JSON.stringify({
+    compilerOptions: tsCompilerOptions,
+    files: [resolvedSourceFileName],
+  });
+
   const compilerHost = createAugmenterCompilerHost(
     resolvedSourceFileName,
     createExpandCodeBlock(options.typeExpression),
-    tsCompilerOptions,
-    options.compilerHostFunctionOverrides,
+    {
+      ...options.compilerHostFunctionOverrides,
+      readFile(fileName) {
+        if (path.resolve(fileName) === virtualConfigFileName) {
+          return virtualConfig;
+        }
+
+        return options.compilerHostFunctionOverrides?.readFile?.(fileName);
+      },
+    },
   );
 
-  const program = ts.createProgram(
-    [resolvedSourceFileName],
-    tsCompilerOptions,
-    compilerHost,
-  );
+  const api = new ts.API({
+    cwd: process.cwd(),
+    fs: compilerHost,
+  });
+  let snapshot: Awaited<ReturnType<typeof api.updateSnapshot>> | undefined;
 
-  const sourceFile = program.getSourceFile(resolvedSourceFileName);
-  if (!sourceFile) {
-    throw new Error("Source file not found!");
+  try {
+    snapshot = await api.updateSnapshot({
+      openProjects: [virtualConfigFileName],
+      openFiles: [resolvedSourceFileName],
+    });
+    const project = await snapshot.getDefaultProjectForFile(
+      resolvedSourceFileName,
+    );
+    if (!project) {
+      throw new Error("Source file not found!");
+    }
+
+    const sourceFile = await project.program.getSourceFile(
+      resolvedSourceFileName,
+    );
+    if (!sourceFile) {
+      throw new Error("Source file not found!");
+    }
+
+    const resultIdentifierNode = findResultIdentifierNode(sourceFile);
+    if (!resultIdentifierNode) {
+      throw new Error("No node found!");
+    }
+
+    const typeChecker = project.checker;
+    const resultType =
+      await typeChecker.getTypeAtLocation(resultIdentifierNode);
+    if (!resultType) {
+      throw new Error("No type found!");
+    }
+
+    const expandedTypeString = await typeChecker.typeToString(
+      resultType,
+      undefined,
+      ts.NodeBuilderFlags.NoTruncation,
+    );
+
+    if (options.prettify?.enabled === false) {
+      return expandedTypeString;
+    }
+
+    return formatTypeExpression(
+      expandedTypeString,
+      options.prettify?.biomeOptions,
+    );
+  } finally {
+    try {
+      await snapshot?.dispose();
+    } finally {
+      await api.close();
+    }
   }
-
-  const resultIdentifierNode = findResultIdentifierNode(sourceFile);
-  if (!resultIdentifierNode) {
-    throw new Error("No node found!");
-  }
-
-  const typeChecker = program.getTypeChecker();
-  const expandedTypeString = typeChecker.typeToString(
-    typeChecker.getTypeAtLocation(resultIdentifierNode),
-    undefined,
-    ts.TypeFormatFlags.NodeBuilderFlagsMask,
-  );
-
-  if (options.prettify?.enabled === false) {
-    return expandedTypeString;
-  }
-
-  return formatTypeExpression(
-    expandedTypeString,
-    options.prettify?.biomeOptions,
-  );
 }

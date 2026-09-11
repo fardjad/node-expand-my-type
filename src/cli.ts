@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { type ParseArgsConfig, parseArgs } from "node:util";
-import ts from "typescript";
+import * as ts from "typescript/unstable/async";
 import { expandMyType } from "./index.js";
 
 type Values = {
@@ -110,17 +110,16 @@ const [sourceFileName, typeExpression] = positionals;
 const prettify = values.prettify ?? true;
 const tsConfigFileName = values.tsconfig;
 
-let tsParsedCommandLine: ts.ParsedCommandLine | undefined;
+let tsCompilerOptions: ts.CompilerOptions | undefined;
 
 if (tsConfigFileName) {
-  const configFile = ts.readConfigFile(tsConfigFileName, ts.sys.readFile);
-  const compilerOptions = ts.parseJsonConfigFileContent(
-    configFile.config,
-    ts.sys,
-    "./",
-  );
-
-  tsParsedCommandLine = compilerOptions;
+  const api = new ts.API({ cwd: process.cwd() });
+  try {
+    const config = await api.parseConfigFile(tsConfigFileName);
+    tsCompilerOptions = config.options as ts.CompilerOptions;
+  } finally {
+    await api.close();
+  }
 }
 
 const result = await expandMyType({
@@ -129,7 +128,7 @@ const result = await expandMyType({
   prettify: {
     enabled: prettify,
   },
-  tsCompilerOptions: tsParsedCommandLine?.options,
+  tsCompilerOptions,
 });
 
 console.log(result);
