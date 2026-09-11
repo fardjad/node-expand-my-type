@@ -35,6 +35,7 @@ Run all of these before committing changes that affect source code, dependencies
 
 ## Keeping this guide current
 
+- Keep this guide concise and operational. Record durable workflows and constraints, not a chronological journal or line-by-line implementation details.
 - Update this file whenever tooling, supported runtimes, build/test workflows, dependency policies, or integration assumptions change. Replace version-specific workarounds with stable documented approaches when they become available.
 
 ## Style and release hygiene
