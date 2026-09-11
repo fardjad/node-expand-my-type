@@ -26,11 +26,16 @@ Run all of these before committing changes that affect source code, dependencies
 
 ## TypeScript 7
 
+- Prefer documented, stable TypeScript APIs and features whenever they meet the requirement. Treat every `typescript/unstable/*` import as version-sensitive: consult the installed package documentation and migration notes before changing or retaining one during an upgrade.
 - TypeScript 7 no longer exposes the historical compiler API from the `typescript` package root. The root resolves to version metadata, not APIs such as `createProgram`.
 - Use the supported TypeScript 7 unstable modules instead: `typescript/unstable/async`, `typescript/unstable/ast`, and `typescript/unstable/fs`.
 - The async API owns external resources. Dispose snapshots and close API instances reliably, including on errors.
 - The snapshot API does not take compiler options directly. When callers supply options, preserve them by creating an in-memory project configuration rather than silently dropping them.
 - Virtual filesystem callbacks may return `undefined` to delegate to the real filesystem, `null` for a missing file, or a string for file contents. Preserve this distinction when working with source text or test fixtures.
+
+## Keeping this guide current
+
+- Update this file whenever tooling, supported runtimes, build/test workflows, dependency policies, or integration assumptions change. Replace version-specific workarounds with stable documented approaches when they become available.
 
 ## Style and release hygiene
 
