@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+# The dependency-update action receives its own GitHub App token below. The
+# workflow token only needs to read this repository for checkout.
+permissions:
+  contents: read
+
 jobs:
   automatic-bun-update:
     runs-on: ubuntu-latest
