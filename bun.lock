@@ -6,7 +6,7 @@
       "name": "expand-my-type",
       "dependencies": {
         "@biomejs/js-api": "6.0.0",
-        "@biomejs/wasm-nodejs": "2.5.12",
+        "@biomejs/wasm-nodejs": "2.5.13",
         "typescript": "7.0.2",
       },
       "devDependencies": {
@@ -36,7 +36,7 @@
 
     "@biomejs/js-api": ["@biomejs/js-api@6.0.0", "", { "peerDependencies": { "@biomejs/wasm-bundler": "^2.5.0", "@biomejs/wasm-nodejs": "^2.5.0", "@biomejs/wasm-web": "^2.5.0" }, "optionalPeers": ["@biomejs/wasm-bundler", "@biomejs/wasm-nodejs", "@biomejs/wasm-web"] }, "sha512-8HP7wexjQo5Np1J9h0B2x8L5G0GZpCacgjykxLHtvLPvF0hNqSG754oh8bxo+OSFDpVGMfSjmLO+ZY/5KbfjmQ=="],
 
-    "@biomejs/wasm-nodejs": ["@biomejs/wasm-nodejs@2.5.12", "", {}, "sha512-fCWM8aDn3X19cc4u/ewDVpx93CpNq4A3BtrGgBYkm/fb2LXNZMdhRUJ0gM2jgsGHTYQ7fz+I2XnPsvlSOqVx/w=="],
+    "@biomejs/wasm-nodejs": ["@biomejs/wasm-nodejs@2.5.13", "", {}, "sha512-0F/VhR2nFxdYbi2HZbjxKgrrutkaMy5/Zi+IQGMIJYy1ZQR6pxvmzEnh6foEth8ekNR68EZa1oAcS7Jtiiqvzg=="],
 
     "@types/node": ["@types/node@26.4.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA=="],
 
