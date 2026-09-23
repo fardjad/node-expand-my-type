@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@biomejs/js-api": "6.0.0",
-    "@biomejs/wasm-nodejs": "2.5.12",
+    "@biomejs/wasm-nodejs": "2.5.14",
     "typescript": "7.0.2"
   },
   "devDependencies": {
