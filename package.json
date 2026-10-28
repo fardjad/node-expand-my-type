@@ -48,7 +48,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@biomejs/js-api": "6.0.0",
+    "@biomejs/js-api": "6.1.0",
     "@biomejs/wasm-nodejs": "2.5.12",
     "typescript": "7.0.2"
   },
